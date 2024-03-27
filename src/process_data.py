@@ -37,18 +37,47 @@ def format_data(df: pd.DataFrame):
     return df
 
 
-def export_data(df: pd.DataFrame):
-    os.makedirs("data/interim/", exist_ok=True)
-    df.to_csv(fic_export_data, index=False)
+def export_data(df: pd.DataFrame, filename: str):
+    # Builds the path to the file
+    file_path = os.path.join("data/interim", filename)
+    
+    # Ensures the directories exist
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    
+    # Exports the DataFrame to a CSV file
+    df.to_csv(file_path, index=False)
+
 
 
 def main_process():
     df: pd.DataFrame = load_data()
     df = format_data(df)
-    export_data(df)
+    export_data(df, "daily_data.csv")  # Keep the original daily data export
+    weekly_df = aggregate_weekly(df)
+    export_data(weekly_df, "weekly_data.csv")  # Export new weekly data
+
+
+def aggregate_weekly(df: pd.DataFrame):
+    # Ensure the date column is in datetime format
+    df[col_date] = pd.to_datetime(df[col_date])
+    
+    # Set the date column as the index
+    df.set_index(col_date, inplace=True)
+    
+    # Resample the data to weekly frequency, summing the consumption
+    weekly_data = df.resample('W').sum()
+    
+    # Reset the index so that 'col_date' is a column again
+    weekly_data.reset_index(inplace=True)
+    
+    # Rename the columns for clarity
+    weekly_data.columns = ['week', 'total_consumption']
+    
+    return weekly_data
 
 
 if __name__ == "__main__":
 
     # data_file: str = "data/raw/eco2mix-regional-tr.csv"
     main_process()
+
