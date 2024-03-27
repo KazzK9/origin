@@ -52,28 +52,20 @@ def export_data(df: pd.DataFrame, filename: str):
 def main_process():
     df: pd.DataFrame = load_data()
     df = format_data(df)
-    export_data(df, "daily_data.csv")  # Keep the original daily data export
-    weekly_df = aggregate_weekly(df)
-    export_data(weekly_df, "weekly_data.csv")  # Export new weekly data
+    last_7_days_consumption = calculate_last_7_days_consumption(df)
+    # This value can be written to a file or directly returned, depending on your preference
+    with open('data/interim/last_7_days_consumption.txt', 'w') as f:
+        f.write(str(last_7_days_consumption))
 
 
-def aggregate_weekly(df: pd.DataFrame):
-    # Ensure the date column is in datetime format
+def calculate_last_7_days_consumption(df: pd.DataFrame):
     df[col_date] = pd.to_datetime(df[col_date])
-    
-    # Set the date column as the index
     df.set_index(col_date, inplace=True)
-    
-    # Resample the data to weekly frequency, summing the consumption
-    weekly_data = df.resample('W').sum()
-    
-    # Reset the index so that 'col_date' is a column again
-    weekly_data.reset_index(inplace=True)
-    
-    # Rename the columns for clarity
-    weekly_data.columns = ['week', 'total_consumption']
-    
-    return weekly_data
+    # Calculate the rolling sum for the last 7 days
+    df['rolling_sum'] = df[col_donnees].rolling('7D').sum()
+    # Get the last value, which is the sum of the last 7 days
+    last_7_days_consumption = df['rolling_sum'].iloc[-1]
+    return last_7_days_consumption
 
 
 if __name__ == "__main__":
