@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Constants
 LAG_N_DAYS: int = 7
-EXPECTED_SAMPLES_PER_DAY: int = 24  # or however many you expect per day
+EXPECTED_SAMPLES_PER_DAY: int = 96  # or however many you expect per day
 
 # Initialize directories for data storage
 os.makedirs("data/raw/", exist_ok=True)
