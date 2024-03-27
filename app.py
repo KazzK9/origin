@@ -7,14 +7,14 @@ from src.process_data import col_date, col_donnees, main_process
 import logging
 import os
 import glob
-from pathlib import Path  # Import Path
-import json  # Import json
+from pathlib import Path  # Make sure to import Path
+import json  # Make sure to import json
 
 logging.basicConfig(level=logging.INFO)
 
 # Constants
-DATA_POINTS_PER_HOUR: int = 4
-DATA_POINTS_PER_DAY: int = 96
+DATA_POINTS_PER_HOUR: int = 4  # Assuming there are 4 data points per hour
+DATA_POINTS_PER_DAY: int = 96  # Assuming there are 96 data points per day
 
 # Initialize directories for data storage
 os.makedirs("data/raw/", exist_ok=True)
@@ -33,30 +33,17 @@ st.title("Data Visualization App")
 # Function to load daily data
 @st.cache(ttl=15 * 60)
 def load_data():
-    list_fic: list[str] = [Path(e) for e in glob.glob("data/raw/*json")]
-    list_df: list[pd.DataFrame] = []
-    for p in list_fic:
-        with open(p, "r") as f:
-            dict_data: dict = json.load(f)
-            # Check if 'results' key is present and not empty
-            if "results" in dict_data and dict_data["results"]:
-                df: pd.DataFrame = pd.DataFrame.from_dict(dict_data.get("results"))
-                list_df.append(df)
-    
-    # If list_df is empty, return an empty DataFrame with expected columns
-    if not list_df:
-        return pd.DataFrame(columns=[col_date, col_donnees])
-
-    df: pd.DataFrame = pd.concat(list_df, ignore_index=True)
-    return df
-
+    load_data_from_lag_to_today(LAG_N_DAYS)
+    main_process()  # This processes and ensures the data is up-to-date
+    data = pd.read_csv("data/interim/daily_data.csv", parse_dates=[col_date])
+    return data
 
 # Load daily data
 df = load_data()
 
-# Displaying the line chart for daily data
+# Displaying the line chart for daily data with hover data
 st.subheader("Line Chart of Numerical Data Over Time")
-fig = px.line(df, x=col_date, y=col_donnees, title="Consommation en fonction du temps")
+fig = px.line(df, x=col_date, y=col_donnees, title="Consommation en fonction du temps", hover_data={col_date: "|%B %d, %Y", col_donnees: True})
 st.plotly_chart(fig)
 
 # Calculate total consumption for the last 7 days
