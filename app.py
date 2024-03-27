@@ -7,6 +7,8 @@ from src.process_data import col_date, col_donnees, main_process
 import logging
 import os
 import glob
+from pathlib import Path  # Import Path
+import json  # Import json
 
 logging.basicConfig(level=logging.INFO)
 
