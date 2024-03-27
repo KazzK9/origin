@@ -31,9 +31,23 @@ st.title("Data Visualization App")
 # Function to load daily data
 @st.cache(ttl=15 * 60)
 def load_data():
-    main_process()  # Ensure the processing script is run to format and save data
-    data = pd.read_csv("data/interim/daily_data.csv", parse_dates=[col_date])
-    return data
+    list_fic: list[str] = [Path(e) for e in glob.glob("data/raw/*json")]
+    list_df: list[pd.DataFrame] = []
+    for p in list_fic:
+        with open(p, "r") as f:
+            dict_data: dict = json.load(f)
+            # Check if 'results' key is present and not empty
+            if "results" in dict_data and dict_data["results"]:
+                df: pd.DataFrame = pd.DataFrame.from_dict(dict_data.get("results"))
+                list_df.append(df)
+    
+    # If list_df is empty, return an empty DataFrame with expected columns
+    if not list_df:
+        return pd.DataFrame(columns=[col_date, col_donnees])
+
+    df: pd.DataFrame = pd.concat(list_df, ignore_index=True)
+    return df
+
 
 # Load daily data
 df = load_data()
