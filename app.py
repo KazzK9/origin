@@ -26,7 +26,7 @@ for file_path in glob.glob("data/raw/*json"):
 st.title("Data Visualization App")
 
 # Define a function to load daily data
-@st.cache(ttl=15 * 60)  # Corrected decorator to @st.cache
+@st.cache_data(ttl=15 * 60)  # Corrected decorator to @st.cache
 def load_data(lag_days: int):
     load_data_from_lag_to_today(lag_days)
     main_process()
@@ -34,7 +34,7 @@ def load_data(lag_days: int):
     return data
 
 # Define a function to load weekly aggregated data
-@st.cache(ttl=15 * 60)
+@st.cache_data(ttl=15 * 60)
 def load_weekly_data():
     weekly_data = pd.read_csv("data/interim/weekly_data.csv", parse_dates=['week'])
     return weekly_data
