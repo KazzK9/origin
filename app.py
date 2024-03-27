@@ -2,24 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from datetime import datetime, timedelta
-from src.fetch_data import load_data_from_lag_to_today
 from src.process_data import col_date, col_donnees, main_process
-import logging
-import os
-import glob
-
-logging.basicConfig(level=logging.INFO)
-
-# Initialize directories for data storage
-os.makedirs("data/raw/", exist_ok=True)
-os.makedirs("data/interim/", exist_ok=True)
-
-# Remove outdated JSON files
-for file_path in glob.glob("data/raw/*json"):
-    try:
-        os.remove(file_path)
-    except FileNotFoundError as e:
-        logging.warning(e)
 
 # Title for your app
 st.title("Data Visualization App")
