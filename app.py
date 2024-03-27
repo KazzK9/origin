@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from datetime import datetime, time, timedelta
 from src.fetch_data import load_data_from_lag_to_today
 from src.process_data import col_date, col_donnees, main_process
 import logging
@@ -10,8 +11,8 @@ import glob
 logging.basicConfig(level=logging.INFO)
 
 # Constants
-LAG_N_DAYS: int = 7
-EXPECTED_SAMPLES_PER_DAY: int = 96  # or however many you expect per day
+DATA_POINTS_PER_HOUR: int = 4
+DATA_POINTS_PER_DAY: int = 96
 
 # Initialize directories for data storage
 os.makedirs("data/raw/", exist_ok=True)
@@ -29,29 +30,28 @@ st.title("Data Visualization App")
 
 # Function to load daily data
 @st.cache(ttl=15 * 60)
-def load_data(lag_days: int):
-    load_data_from_lag_to_today(lag_days)
-    main_process()
+def load_data():
+    main_process()  # Ensure the processing script is run to format and save data
     data = pd.read_csv("data/interim/daily_data.csv", parse_dates=[col_date])
     return data
 
-# Function to remove the last N samples and return the number of removed samples
-def remove_data(df: pd.DataFrame, last_n_samples: int = EXPECTED_SAMPLES_PER_DAY):
-    removed_data = df.tail(last_n_samples)
-    df.drop(df.tail(last_n_samples).index, inplace=True)
-    return df, removed_data.shape[0]
-
-# Load and clean daily data
-df, num_removed_samples = remove_data(load_data(LAG_N_DAYS), last_n_samples=EXPECTED_SAMPLES_PER_DAY)
+# Load daily data
+df = load_data()
 
 # Displaying the line chart for daily data
 st.subheader("Line Chart of Numerical Data Over Time")
 fig = px.line(df, x=col_date, y=col_donnees, title="Consommation en fonction du temps")
 st.plotly_chart(fig)
 
-# Calculate and display total consumption for the last 7 days
+# Calculate total consumption for the last 7 days
 recent_consumption = df[df[col_date] >= (df[col_date].max() - pd.Timedelta(days=7))][col_donnees].sum()
 st.subheader(f"Total Consumption for the Last 7 Days: {recent_consumption:.2f} units")
 
-# Display the number of removed samples
-st.subheader(f"Number of Missing Data Points: {num_removed_samples}")
+# Calculate the number of expected data points from now to tomorrow at 12PM
+now = datetime.now()
+tomorrow_noon = datetime.combine((now + timedelta(days=1)).date(), time(12, 0))
+hours_until_tomorrow_noon = (tomorrow_noon - now).total_seconds() / 3600
+expected_data_points = int(hours_until_tomorrow_noon * DATA_POINTS_PER_HOUR)
+
+# Display the number of expected data points
+st.subheader(f"Expected Data Points Until Tomorrow 12 PM: {expected_data_points}")
